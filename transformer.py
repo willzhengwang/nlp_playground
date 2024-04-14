@@ -150,16 +150,16 @@ class MultiHeadAttentionBlock(nn.Module):
         value = self.w_v(v)  # (batch_size, seq_len, d_model)
 
         # (batch_size, seq_len, d_model) --> (batch_size, h, seq_len, d_k)
-        batch_size, seq_len = query.shape[0], query.shape[1]
-        query = query.view(batch_size, seq_len, self.h, self.d_k).transpose(1, 2)
-        key = key.view(batch_size, seq_len, self.h, self.d_k).transpose(1, 2)
-        value = value.view(batch_size, seq_len, self.h, self.d_k).transpose(1, 2)
+        # the batch size in test or validation is not the same as the training.
+        query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1, 2)
+        key = key.view(key.shape[0], key.shape[1], self.h, self.d_k).transpose(1, 2)
+        value = value.view(value.shape[0], value.shape[1], self.h, self.d_k).transpose(1, 2)
 
         # calculate attention (x for next layer) and attention_scores (for visualization)
         x, attention_scores = self.attention(query, key, value, mask, self.dropout)
 
         # (batch_size, h, seq_len, d_k) --> (batch_size, seq_len, h, d_k)
-        x = x.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
+        x = x.transpose(1, 2).contiguous().view(x.shape[0], -1, self.d_model)
 
         return self.w_o(x)
 
@@ -259,7 +259,6 @@ class DecoderBlock(nn.Module):
 
     def forward(self, x, encoder_output, src_mask, tgt_mask):
         """
-
         Encoder and decoder have different
         @param x:
         @param encoder_output:
@@ -271,7 +270,7 @@ class DecoderBlock(nn.Module):
         # for the cross_attention: key and value from the encoder
         x = self.residual_connection[1](x, lambda x: self.cross_attention_block(
             x, encoder_output, encoder_output, src_mask))
-        x = self.residual_connection[3](x, self.feed_forward_block)
+        x = self.residual_connection[2](x, self.feed_forward_block)
         return x
 
 
