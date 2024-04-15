@@ -19,7 +19,7 @@ from tokenizers.pre_tokenizers import Whitespace
 
 from dataset import BilingualDataset, causal_mask
 from config import get_config, latest_weights_file_path, get_weights_file_path
-from transformer import build_transformer
+from model import build_transformer
 
 
 def get_all_sentences(ds, lang):
@@ -108,7 +108,7 @@ def train_model(config):
     # Make sure the weights folder exists
     Path(f"{config['work_dir']}/{config['datasource']}_{config['model_folder']}").mkdir(parents=True, exist_ok=True)
 
-    train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt = get_ds(config, 0.01)
+    train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt = get_ds(config, 1.0)
     model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
     # Tensorboard
     writer = SummaryWriter(config['experiment_name'])
